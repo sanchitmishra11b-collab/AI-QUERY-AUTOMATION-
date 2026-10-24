@@ -1,0 +1,303 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "=POST",
+        "path": "customer_query",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        48
+      ],
+      "id": "3d33122a-4aa3-45b5-8cfa-a32a4eda85b7",
+      "name": "Webhook",
+      "webhookId": "24c80ee7-b0da-40c7-8d7b-5342a0d395af"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI assistant for an automation services company.\n\nAnalyze the customer's query.\n\nDetermine:\n- intent\n- priority\n- sentiment\n- lead_score from 0 to 100\n- recommended_action\n- customer_response\n\nCustomer query:\n{{ $json.body.query }}\n\nReturn ONLY the actual values for these six fields.\n\nDo NOT return a JSON Schema.\nDo NOT return \"type\", \"properties\", \"description\", or \"required\".\nDo NOT explain your answer.\n\nThe customer_response field must contain the actual message that should be sent to the customer.\n\nKeep the response clear, practical, and professional.\n",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        208,
+        128
+      ],
+      "id": "b3e41bad-c32a-4abe-8ff9-fd5fe39f5e79",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=   {{ $json.output.customer_response }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        560,
+        160
+      ],
+      "id": "f70c8afa-1ed5-4e56-b509-5eb897ea4b1b",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"intent\": {\n      \"type\": \"string\",\n      \"description\": \"The main reason for the customer's query.\"\n    },\n    \"priority\": {\n      \"type\": \"string\",\n      \"enum\": [\"Low\", \"Medium\", \"High\"],\n      \"description\": \"The priority of the customer query.\"\n    },\n    \"sentiment\": {\n      \"type\": \"string\",\n      \"enum\": [\"Positive\", \"Neutral\", \"Negative\"],\n      \"description\": \"The customer's sentiment.\"\n    },\n    \"lead_score\": {\n      \"type\": \"number\",\n      \"minimum\": 0,\n      \"maximum\": 100,\n      \"description\": \"A lead score from 0 to 100.\"\n    },\n    \"recommended_action\": {\n      \"type\": \"string\",\n      \"description\": \"The recommended next action.\"\n    },\n    \"customer_response\": {\n      \"type\": \"string\",\n      \"description\": \"The actual response to send to the customer.\"\n    }\n  },\n  \"required\": [\n    \"intent\",\n    \"priority\",\n    \"sentiment\",\n    \"lead_score\",\n    \"recommended_action\",\n    \"customer_response\"\n  ],\n  \"additionalProperties\": false\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        384
+      ],
+      "id": "b678b489-c838-46d4-afed-5b241d252107",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        112,
+        304
+      ],
+      "id": "71f1f295-e640-4aff-8bc9-c8763452e1bf",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "hLz4MS0sL7aYy7qS",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1fnbnb0Nk9d38ZOfJVvRVsZVQkcOix5OiCbNw6dipOao",
+          "mode": "list",
+          "cachedResultName": "customer query log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fnbnb0Nk9d38ZOfJVvRVsZVQkcOix5OiCbNw6dipOao/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fnbnb0Nk9d38ZOfJVvRVsZVQkcOix5OiCbNw6dipOao/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            " Timestamp ": "={{ $now }}",
+            "Name": "={{ $json.body.name }}",
+            "Email": "={{ $json.body.email }}",
+            "Query": "={{ $json.body.query }}",
+            "Intent": "={{ $json.output.intent }}",
+            "Priority": "={{ $json.output.priority }}",
+            "Sentiment": "={{ $json.output.sentiment }}",
+            "Lead score": "={{ $json.output.lead_score }}",
+            "Recommended Action": "={{ $json.output.recommended_action }}",
+            "Customer Response": "={{ $json.output.customer_response }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": " Timestamp ",
+              "displayName": " Timestamp ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Query",
+              "displayName": "Query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Intent",
+              "displayName": "Intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead score",
+              "displayName": "Lead score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommended Action",
+              "displayName": "Recommended Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Response",
+              "displayName": "Customer Response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        560,
+        368
+      ],
+      "id": "e3c81a2c-2bac-4cfe-aef9-05bd1981e1c1",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sqRK2Glc165tiTxn",
+          "name": "Google Sheets account 5"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b192f033-4517-4f28-8c46-5005df995645",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0a3e0126c130c8800d30488de3ba536e4c0ef5122403a4a80011b5fcdf2e8d18"
+  },
+  "nodeGroups": [],
+  "id": "BPUJms7TND8mod7D",
+  "tags": []
+}
